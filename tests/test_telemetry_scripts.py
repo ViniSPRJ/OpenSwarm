@@ -37,9 +37,11 @@ def test_dashboard_agent_usage_groups_by_agent_name() -> None:
     payloads = build_insight_payloads(123)
     agent_usage = next(payload for payload in payloads if payload["name"] == "Agent usage by agent")
 
+    assert "display" not in agent_usage["query"]
     source = agent_usage["query"]["source"]
     assert source["series"][0]["event"] == "agent_run_completed"
     assert source["breakdownFilter"]["breakdown"] == "agent_name"
+    assert source["trendsFilter"]["display"] == "ActionsBarValue"
     assert agent_usage["dashboards"] == [123]
 
 
@@ -49,6 +51,18 @@ def test_dashboard_dry_run_payload_has_no_secret_fields() -> None:
     assert payload["dashboard"]["path"] == "/api/environments/env_123/dashboards/"
     assert payload["insights"][0]["path"] == "/api/environments/env_123/insights/"
     assert "POSTHOG_PERSONAL_API_KEY" not in str(payload)
+
+
+def test_dashboard_error_rate_uses_hogql_rate_query() -> None:
+    payloads = build_insight_payloads(123)
+    error_rate = next(payload for payload in payloads if payload["name"] == "Error rate")
+
+    assert error_rate["query"]["kind"] == "DataVisualizationNode"
+    source = error_rate["query"]["source"]
+    assert source["kind"] == "HogQLQuery"
+    assert "countIf(event = 'error')" in source["query"]
+    assert "countIf(event = 'swarm_run_completed')" in source["query"]
+    assert error_rate["dashboards"] == [123]
 
 
 def test_smoke_script_uses_manual_smoke_event() -> None:

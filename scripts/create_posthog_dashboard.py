@@ -33,10 +33,11 @@ def _trends_query(
         "dateRange": {"date_from": "-30d"},
         "interval": "day",
         "series": [{"kind": "EventsNode", "event": event, "name": name, "math": math}],
+        "trendsFilter": {"display": display},
     }
     if breakdown:
         source["breakdownFilter"] = {"breakdown_type": "event", "breakdown": breakdown}
-    return {"kind": "InsightVizNode", "source": source, "display": display}
+    return {"kind": "InsightVizNode", "source": source}
 
 
 def build_insight_payloads(dashboard_id: int | str) -> list[dict[str, Any]]:
@@ -86,22 +87,19 @@ def build_insight_payloads(dashboard_id: int | str) -> list[dict[str, Any]]:
             "name": "Error rate",
             "description": "Errors divided by completed swarm runs.",
             "query": {
-                "kind": "InsightVizNode",
-                "display": "ActionsLineGraph",
+                "kind": "DataVisualizationNode",
                 "source": {
-                    "kind": "TrendsQuery",
-                    "dateRange": {"date_from": "-30d"},
-                    "interval": "day",
-                    "series": [
-                        {"kind": "EventsNode", "event": "error", "name": "Errors", "math": "total"},
-                        {
-                            "kind": "EventsNode",
-                            "event": "swarm_run_completed",
-                            "name": "Completed runs",
-                            "math": "total",
-                        },
-                    ],
-                    "formulas": [{"formula": "A / B"}],
+                    "kind": "HogQLQuery",
+                    "query": (
+                        "SELECT "
+                        "toStartOfDay(timestamp) AS day, "
+                        "countIf(event = 'error') / nullIf(countIf(event = 'swarm_run_completed'), 0) AS error_rate "
+                        "FROM events "
+                        "WHERE event IN ('error', 'swarm_run_completed') "
+                        "AND timestamp >= now() - INTERVAL 30 DAY "
+                        "GROUP BY day "
+                        "ORDER BY day ASC"
+                    ),
                 },
             },
             "dashboards": dashboards,
