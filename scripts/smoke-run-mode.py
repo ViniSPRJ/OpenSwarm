@@ -244,13 +244,16 @@ def main() -> int:
     parser.add_argument("--keep-root", action="store_true")
     args = parser.parse_args()
 
-    api_key = os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is required for this live OpenSwarm Run-mode smoke test")
-
     repo = pathlib.Path(__file__).resolve().parents[1]
     package_json = json.loads((repo / "package.json").read_text(encoding="utf-8"))
     npm_spec = args.npm_spec or f"{package_json['name']}@{package_json['version']}"
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key and args.check == "prompt" and os.environ.get("GITHUB_ACTIONS") == "true":
+        print("Skipped OpenSwarm live prompt smoke because OPENAI_API_KEY is not configured")
+        return 0
+    if not api_key and args.check in {"all", "prompt"}:
+        raise RuntimeError("OPENAI_API_KEY is required for the live prompt smoke test")
+    auth_key = api_key or "dummy-openai-key-for-agent-roster-smoke"
     root = pathlib.Path(tempfile.mkdtemp(prefix="openswarm-run-mode-smoke-"))
     env = os.environ.copy()
     env.update(
@@ -258,7 +261,7 @@ def main() -> int:
             "PYTHONUTF8": "1",
             "PYTHONIOENCODING": "utf-8",
             "TERM": "xterm-256color",
-            "OPENCODE_AUTH_CONTENT": json.dumps({"openai": {"type": "api", "key": api_key}}),
+            "OPENCODE_AUTH_CONTENT": json.dumps({"openai": {"type": "api", "key": auth_key}}),
             "XDG_DATA_HOME": str(root / "xdg-data"),
             "XDG_CONFIG_HOME": str(root / "xdg-config"),
             "XDG_CACHE_HOME": str(root / "xdg-cache"),
