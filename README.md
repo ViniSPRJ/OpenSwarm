@@ -154,10 +154,6 @@ python server.py           # Runs on localhost:8080
 - **Terminal UI for Agency Swarm:** [AgentSwarm](https://github.com/VRSEN/agentswarm-cli) (OpenCode-based TUI)
 - **External integrations:** [Composio](https://composio.dev)
 
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=VRSEN/OpenSwarm&type=date&legend=top-left)](https://www.star-history.com/#VRSEN/OpenSwarm&type=date&legend=top-left)
-
 ---
 
 ## 👥 Team
