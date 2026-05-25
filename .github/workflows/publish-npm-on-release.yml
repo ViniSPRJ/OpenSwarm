@@ -72,20 +72,37 @@ jobs:
             exit 1
           fi
 
-          mapfile -t assets < <(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | sort)
           required_assets=(
             agentswarm-darwin-arm64
             agentswarm-darwin-x64
+            agentswarm-darwin-x64-baseline
+            agentswarm-linux-arm64
             agentswarm-linux-x64
+            agentswarm-linux-x64-baseline
+            agentswarm-windows-arm64.exe
             agentswarm-windows-x64.exe
+            agentswarm-windows-x64-baseline.exe
           )
 
-          for required in "${required_assets[@]}"; do
-            if ! printf '%s\n' "${assets[@]}" | grep -Fxq "$required"; then
-              echo "Release $RELEASE_TAG is missing required asset: $required" >&2
-              exit 1
+          missing=()
+          for attempt in {1..30}; do
+            mapfile -t assets < <(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | sort)
+            missing=()
+            for required in "${required_assets[@]}"; do
+              if ! printf '%s\n' "${assets[@]}" | grep -Fxq "$required"; then
+                missing+=("$required")
+              fi
+            done
+            if (( ${#missing[@]} == 0 )); then
+              break
             fi
+            echo "Release $RELEASE_TAG is missing assets; waiting before publish validation: ${missing[*]}" >&2
+            sleep 10
           done
+          if (( ${#missing[@]} > 0 )); then
+            echo "Release $RELEASE_TAG is missing required assets after waiting: ${missing[*]}" >&2
+            exit 1
+          fi
 
           echo "NPM_TAG=$npm_tag" >> "$GITHUB_ENV"
 
