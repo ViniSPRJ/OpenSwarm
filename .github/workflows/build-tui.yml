@@ -170,7 +170,8 @@ jobs:
         with:
           bun-version: "1.3.13"
 
-      - name: Validate product telemetry secrets
+      - name: Validate official product telemetry secrets
+        if: github.repository == 'VRSEN/OpenSwarm'
         shell: bash
         env:
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
