@@ -85,7 +85,7 @@ jobs:
           )
 
           missing=()
-          for attempt in {1..30}; do
+          for attempt in {1..60}; do
             mapfile -t assets < <(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | sort)
             missing=()
             for required in "${required_assets[@]}"; do
@@ -97,7 +97,9 @@ jobs:
               break
             fi
             echo "Release $RELEASE_TAG is missing assets; waiting before publish validation: ${missing[*]}" >&2
-            sleep 10
+            if (( attempt < 60 )); then
+              sleep 10
+            fi
           done
           if (( ${#missing[@]} > 0 )); then
             echo "Release $RELEASE_TAG is missing required assets after waiting: ${missing[*]}" >&2
