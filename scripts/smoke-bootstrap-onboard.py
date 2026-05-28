@@ -104,14 +104,6 @@ def smoke_onboard_env_writes() -> None:
         sys.path.pop(0)
 
     provider = next(item for item in onboard.PROVIDERS if item["name"] == "OpenAI")
-    secrets = iter(
-        [
-            "sk-test-openai",
-            "search-test-key",
-            "composio-test-key",
-            "composio-test-user",
-        ]
-    )
 
     with tempfile.TemporaryDirectory(prefix="openswarm-onboard-smoke-") as tmp:
         env = Path(tmp) / ".env"
@@ -120,12 +112,7 @@ def smoke_onboard_env_writes() -> None:
             patch.object(onboard, "ENV_PATH", env),
             patch.object(onboard, "console", Console(file=sink, force_terminal=False)),
             patch.object(onboard, "_ask_select", lambda _message, _choices: provider),
-            patch.object(
-                onboard,
-                "_ask_checkbox",
-                lambda _message, _choices: ["search", "composio"],
-            ),
-            patch.object(onboard, "_ask_secret", lambda _label, _url: next(secrets)),
+            patch.object(onboard, "_ask_secret", lambda _label, _url: "sk-test-openai"),
             patch.object(onboard, "_ask_confirm", lambda _message, default=True: default),
         ):
             onboard.run_onboarding()
@@ -135,9 +122,6 @@ def smoke_onboard_env_writes() -> None:
     expected = {
         "OPENAI_API_KEY": "sk-test-openai",
         "DEFAULT_MODEL": provider["default_model"],
-        "SEARCH_API_KEY": "search-test-key",
-        "COMPOSIO_API_KEY": "composio-test-key",
-        "COMPOSIO_USER_ID": "composio-test-user",
     }
     missing = {key: value for key, value in expected.items() if values.get(key) != value}
     if missing:

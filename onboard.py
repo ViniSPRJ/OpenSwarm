@@ -74,77 +74,6 @@ PROVIDERS = [
     },
 ]
 
-# ── add-on definitions ────────────────────────────────────────────────────────
-# exclude_for: list of provider names that already cover this key
-ADD_ONS = [
-    {
-        "id":          "search",
-        "name":        "Web Search",
-        "description": "Web, Scholar & product search for all agents",
-        "keys": [
-            {"env": "SEARCH_API_KEY", "label": "SearchAPI key",
-             "url": "https://www.searchapi.io"},
-        ],
-        "exclude_for": [],
-    },
-    {
-        "id":          "anthropic",
-        "name":        "Anthropic Claude  —  better slides quality",
-        "description": "Claude produces significantly better slide HTML output",
-        "keys": [
-            {"env": "ANTHROPIC_API_KEY", "label": "Anthropic API key",
-             "url": "https://console.anthropic.com/settings/keys"},
-        ],
-        "exclude_for": ["Anthropic"],
-    },
-    {
-        "id":          "composio",
-        "name":        "Composio  —  10,000+ integrations",
-        "description": "Gmail, Slack, GitHub, HubSpot, Google Calendar and more",
-        "keys": [
-            {"env": "COMPOSIO_API_KEY", "label": "Composio API key",
-             "url": "https://composio.dev"},
-            {"env": "COMPOSIO_USER_ID", "label": "Composio user ID",
-             "url": "https://composio.dev"},
-        ],
-        "exclude_for": [],
-    },
-    {
-        "id":          "google",
-        "name":        "Google Gemini  —  image gen & Veo video",
-        "description": "Gemini image generation/editing and Veo video generation",
-        "keys": [
-            {"env": "GOOGLE_API_KEY", "label": "Google AI API key",
-             "url": "https://aistudio.google.com/app/apikey"},
-        ],
-        "exclude_for": ["Google Gemini"],
-    },
-    {
-        "id":          "fal",
-        "name":        "Fal.ai  —  Seedance video & background removal",
-        "description": "Seedance 1.5 Pro video gen, video editing, background removal",
-        "keys": [
-            {"env": "FAL_KEY", "label": "Fal.ai API key",
-             "url": "https://fal.ai/dashboard/keys"},
-        ],
-        "exclude_for": [],
-    },
-    {
-        "id":          "stock",
-        "name":        "Stock photos  —  Pexels / Pixabay / Unsplash",
-        "description": "Image search for the Slides Agent",
-        "keys": [
-            {"env": "PEXELS_API_KEY",     "label": "Pexels API key",
-             "url": "https://www.pexels.com/api"},
-            {"env": "PIXABAY_API_KEY",    "label": "Pixabay API key",
-             "url": "https://pixabay.com/api/docs"},
-            {"env": "UNSPLASH_ACCESS_KEY", "label": "Unsplash access key",
-             "url": "https://unsplash.com/developers"},
-        ],
-        "exclude_for": [],
-    },
-]
-
 # ── ui helpers ────────────────────────────────────────────────────────────────
 
 def _step(n: int, label: str) -> None:
@@ -254,44 +183,6 @@ def run_onboarding() -> None:
             updates[provider["env_key"]] = key
 
     updates["DEFAULT_MODEL"]       = provider["default_model"]
-
-    # ── Step 3: add-ons ───────────────────────────────────────────────────────
-    _step(3, "Add-ons  [dim](optional)[/dim]")
-
-    available = [a for a in ADD_ONS if provider["name"] not in a["exclude_for"]]
-    addon_choices = [
-        Choice(
-            title=(
-                [
-                    ("class:text",  a["name"]),
-                    ("fg:#555555",  "  ·  "),
-                    ("fg:#666666",  a["description"]),
-                ]
-                if _HAS_QUESTIONARY
-                else f"{a['name']}  —  {a['description']}"
-            ),
-            value=a["id"],
-        )
-        for a in available
-    ]
-    selected_ids = _ask_checkbox("Select add-ons to enable:", addon_choices)
-    selected_addons = [a for a in available if a["id"] in selected_ids]
-
-    # ── Step 4: add-on keys ───────────────────────────────────────────────────
-    if selected_addons:
-        _step(4, "Add-on Keys")
-        for addon in selected_addons:
-            console.print(f"\n  [bold]{addon['name'].split('  ')[0]}[/bold]")
-            for key_spec in addon["keys"]:
-                existing_val = existing.get(key_spec["env"], "")
-                if existing_val:
-                    console.print(f"  [dim]{key_spec['env']} is already configured.[/dim]")
-                    if not _ask_confirm("  Update it?", default=False):
-                        updates[key_spec["env"]] = existing_val
-                        continue
-                val = _ask_secret(key_spec["label"], key_spec["url"])
-                if val:
-                    updates[key_spec["env"]] = val
 
     # ── write .env ────────────────────────────────────────────────────────────
     _write_env(updates)

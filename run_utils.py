@@ -39,7 +39,6 @@ def _configure_product_env() -> None:
     os.environ.setdefault("AGENTSWARM_PRODUCT_TUI_LOGO_LEFT", _PRODUCT_TUI_LOGO_LEFT)
     os.environ.setdefault("AGENTSWARM_PRODUCT_TUI_LOGO_RIGHT", _PRODUCT_TUI_LOGO_RIGHT)
     os.environ.setdefault("AGENTSWARM_PRODUCT_WORDMARK_LINES", _PRODUCT_WORDMARK_LINES)
-    os.environ.setdefault("AGENTSWARM_PRODUCT_ENABLE_ADDONS", "true")
 
 
 def _preload_agentswarm_bin(repo: Path | None = None) -> None:
@@ -335,29 +334,6 @@ def _bootstrap() -> None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-_OPTIONAL_INTEGRATIONS = [
-    ("Composio (10,000+ external integrations)", ["COMPOSIO_API_KEY", "COMPOSIO_USER_ID"]),
-    ("Anthropic / Claude models", ["ANTHROPIC_API_KEY"]),
-    ("Search", ["SEARCH_API_KEY"]),
-    ("Fal.ai (video & audio generation)", ["FAL_KEY"]),
-    ("Google AI / Gemini", ["GOOGLE_API_KEY"]),
-    ("Pexels (stock images)", ["PEXELS_API_KEY"]),
-    ("Pixabay (stock images)", ["PIXABAY_API_KEY"]),
-    ("Unsplash (stock images)", ["UNSPLASH_ACCESS_KEY"]),
-]
-
-
-def build_integration_summary() -> str:
-    lines = ["Optional integrations:"]
-    for name, keys in _OPTIONAL_INTEGRATIONS:
-        active = [k for k in keys if os.getenv(k)]
-        if active:
-            lines.append(f"  ✓  {name}")
-        else:
-            lines.append(f"  ✗  {name}  (missing: {', '.join(keys)})")
-    return "\n".join(lines)
-
-
 def _configure_demo_console() -> None:
     """
     Terminal demo runs can stream stdout/stderr into a UI that expects structured output.
@@ -457,9 +433,6 @@ def main() -> None:
             os.close(_dn)
         except OSError:
             pass
-
-        print(build_integration_summary())
-        print()
 
         agency = create_agency()
         agency.tui(show_reasoning=True, reload=False)
