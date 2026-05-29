@@ -158,6 +158,7 @@ jobs:
             asset: agentswarm-windows-arm64.exe
 
     runs-on: ${{ matrix.os }}
+    environment: ${{ needs.prepare.outputs.is_prerelease == 'true' && 'dev' || 'prod' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -169,6 +170,15 @@ jobs:
         with:
           bun-version: "1.3.13"
 
+      - name: Validate official product telemetry secrets
+        if: github.repository == 'VRSEN/OpenSwarm'
+        shell: bash
+        env:
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$POSTHOG_API_KEY"
+
       - name: Install dependencies
         working-directory: agentswarm-cli
         run: bun install
@@ -179,6 +189,8 @@ jobs:
           BUILD_ALL: ${{ matrix.build_all || false }}
           BASELINE: ${{ matrix.baseline }}
           OPENCODE_CHANNEL: ${{ needs.prepare.outputs.npm_tag }}
+          AGENTSWARM_POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+          AGENTSWARM_POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
           AGENTSWARM_PRODUCT_DISPLAY_NAME: OpenSwarm
           AGENTSWARM_PRODUCT_COMMAND: openswarm
           AGENTSWARM_PRODUCT_PACKAGE_NAME: "@vrsen/openswarm"
