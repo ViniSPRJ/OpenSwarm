@@ -8,10 +8,6 @@ This file gives coding agents everything they need to understand and customize t
 
 OpenSwarm is a multi-agent AI team you can fork and reshape into any kind of swarm you need — SEO, sales, research, finance, customer support, or anything else. Each agent is a specialist. They collaborate through a shared orchestrator.
 
-## Merge and Release Gate
-
-Do not merge pull requests, push to `main`, tag releases, publish packages, or ship binaries unless the user explicitly approves that exact action. Before asking for that approval, prove the change is aligned with user intent, correct, globally optimal, compliant with this file, and manually QA-ready when the change affects a user-testable binary or TUI flow.
-
 ---
 
 ## Folder Structure
