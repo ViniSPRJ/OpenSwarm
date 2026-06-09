@@ -132,4 +132,12 @@ jobs:
           done
 
       - name: Publish npm package
-        run: npm publish --access public --tag "$NPM_TAG"
+        shell: bash
+        run: |
+          set -euo pipefail
+          pkg_id="$(node -p "const pkg=require('./package.json'); pkg.name + '@' + pkg.version")"
+          if npm view "$pkg_id" version >/dev/null 2>&1; then
+            echo "Skipping $pkg_id; already published."
+            exit 0
+          fi
+          npm publish --access public --tag "$NPM_TAG"

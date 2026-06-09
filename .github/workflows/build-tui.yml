@@ -263,7 +263,7 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Create GitHub Release
+      - name: Upload GitHub Release Assets
         shell: bash
         env:
           GH_REPO: ${{ github.repository }}
@@ -281,13 +281,10 @@ jobs:
           fi
 
           create_flags=(--draft --generate-notes --target "$TARGET_COMMITISH" --title "$RELEASE_TAG")
-          edit_flags=(--draft=false)
           if [[ "$IS_PRERELEASE" == "true" ]]; then
             create_flags+=(--prerelease --latest=false)
-            edit_flags+=(--prerelease)
           else
             create_flags+=(--latest)
-            edit_flags+=(--latest)
           fi
 
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
@@ -295,8 +292,6 @@ jobs:
           else
             gh release create "$RELEASE_TAG" "${files[@]}" "${create_flags[@]}"
           fi
-
-          gh release edit "$RELEASE_TAG" "${edit_flags[@]}"
 
   publish-npm:
     needs:
@@ -413,4 +408,40 @@ jobs:
           done
 
       - name: Publish npm package
-        run: npm publish --access public --tag "$NPM_TAG"
+        shell: bash
+        run: |
+          set -euo pipefail
+          pkg_id="$(node -p "const pkg=require('./package.json'); pkg.name + '@' + pkg.version")"
+          if npm view "$pkg_id" version >/dev/null 2>&1; then
+            echo "Skipping $pkg_id; already published."
+            exit 0
+          fi
+          npm publish --access public --tag "$NPM_TAG"
+
+  publish-release:
+    needs:
+      - prepare
+      - publish-npm
+    if: github.repository == 'VRSEN/OpenSwarm'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish GitHub Release
+        shell: bash
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.release_tag }}
+          IS_PRERELEASE: ${{ needs.prepare.outputs.is_prerelease }}
+        run: |
+          set -euo pipefail
+
+          edit_flags=(--draft=false)
+          if [[ "$IS_PRERELEASE" == "true" ]]; then
+            edit_flags+=(--prerelease --latest=false)
+          else
+            edit_flags+=(--latest)
+          fi
+
+          gh release edit "$RELEASE_TAG" "${edit_flags[@]}"
