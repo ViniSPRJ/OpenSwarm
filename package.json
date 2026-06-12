@@ -14,7 +14,6 @@
         "openswarm.config.mjs",
         "openswarm.product-env.json",
         "run_utils.py",
-        "onboard.py",
         "swarm.py",
         "config.py",
         "helpers.py",

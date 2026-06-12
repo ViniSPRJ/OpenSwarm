@@ -4,7 +4,6 @@ import sys
 import site
 import subprocess
 import shutil
-import tempfile
 import platform as platform_module
 from pathlib import Path
 
@@ -560,53 +559,36 @@ def main() -> None:
 
     from swarm import create_agency
 
-    onboard_flag = Path(tempfile.gettempdir()) / "_openswarm_onboard.flag"
-    os.environ["OPENSWARM_ONBOARD_FLAG"] = str(onboard_flag)
-    onboard_flag.unlink(missing_ok=True)
+    import logging
+    sys.stdout = sys.__stdout__
+    sys.stderr = sys.__stderr__
+    logging.disable(logging.NOTSET)
+    print("\nStarting OpenSwarm… this may take a few seconds.")
+    _configure_demo_console()
 
-    while True:
-        import logging
-        sys.stdout = sys.__stdout__
-        sys.stderr = sys.__stderr__
-        logging.disable(logging.NOTSET)
-        print("\nStarting OpenSwarm… this may take a few seconds.")
-        _configure_demo_console()
+    # Suppress OS-level stderr (fd 2) to prevent GLib/GIO UWP-app
+    # warnings from appearing in the terminal during startup and TUI.
+    _saved_stderr_fd = None
+    try:
+        _saved_stderr_fd = os.dup(2)
+        _dn = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(_dn, 2)
+        os.close(_dn)
+    except OSError:
+        pass
 
-        # Suppress OS-level stderr (fd 2) to prevent GLib/GIO UWP-app
-        # warnings from appearing in the terminal during startup and TUI.
-        _saved_stderr_fd = None
+    print(build_integration_summary())
+    print()
+
+    agency = create_agency()
+    agency.tui(show_reasoning=True, reload=False)
+
+    if _saved_stderr_fd is not None:
         try:
-            _saved_stderr_fd = os.dup(2)
-            _dn = os.open(os.devnull, os.O_WRONLY)
-            os.dup2(_dn, 2)
-            os.close(_dn)
+            os.dup2(_saved_stderr_fd, 2)
+            os.close(_saved_stderr_fd)
         except OSError:
             pass
-
-        print(build_integration_summary())
-        print()
-
-        agency = create_agency()
-        agency.tui(show_reasoning=True, reload=False)
-
-        if _saved_stderr_fd is not None:
-            try:
-                os.dup2(_saved_stderr_fd, 2)
-                os.close(_saved_stderr_fd)
-            except OSError:
-                pass
-
-        if onboard_flag.exists():
-            onboard_flag.unlink(missing_ok=True)
-            sys.stdout = sys.__stdout__
-            sys.stderr = sys.__stderr__
-            logging.disable(logging.NOTSET)
-            print("\nLaunching setup wizard…")
-            from onboard import run_onboarding
-            run_onboarding()
-            _load_openswarm_dotenv(override=True)
-        else:
-            break
 
 
 if __name__ == "__main__":

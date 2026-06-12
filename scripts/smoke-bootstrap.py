@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused smoke checks for OpenSwarm import bootstrap and onboarding writes."""
+"""Focused smoke checks for OpenSwarm import bootstrap."""
 
 from __future__ import annotations
 
@@ -87,55 +87,6 @@ def smoke_swarm_import_skips_bootstrap() -> None:
         raise RuntimeError(f"swarm.py ran bootstrap during import: {order}")
     if not order or order[0] != "dotenv":
         raise RuntimeError(f"swarm.py did not configure runtime during import: {order}")
-
-
-def smoke_onboard_env_writes() -> None:
-    sys.path.insert(0, str(ROOT))
-    try:
-        import onboard
-        from rich.console import Console
-    finally:
-        sys.path.pop(0)
-
-    provider = next(item for item in onboard.PROVIDERS if item["name"] == "OpenAI")
-    secrets = iter(
-        [
-            "sk-test-openai",
-            "search-test-key",
-            "composio-test-key",
-            "composio-test-user",
-        ]
-    )
-
-    with tempfile.TemporaryDirectory(prefix="openswarm-onboard-smoke-") as tmp:
-        env = Path(tmp) / ".env"
-        sink = io.StringIO()
-        with (
-            patch.object(onboard, "ENV_PATH", env),
-            patch.object(onboard, "console", Console(file=sink, force_terminal=False)),
-            patch.object(onboard, "_ask_select", lambda _message, _choices: provider),
-            patch.object(
-                onboard,
-                "_ask_checkbox",
-                lambda _message, _choices: ["search", "composio"],
-            ),
-            patch.object(onboard, "_ask_secret", lambda _label, _url: next(secrets)),
-            patch.object(onboard, "_ask_confirm", lambda _message, default=True: default),
-        ):
-            onboard.run_onboarding()
-
-        values = onboard.dotenv_values(str(env))
-
-    expected = {
-        "OPENAI_API_KEY": "sk-test-openai",
-        "DEFAULT_MODEL": provider["default_model"],
-        "SEARCH_API_KEY": "search-test-key",
-        "COMPOSIO_API_KEY": "composio-test-key",
-        "COMPOSIO_USER_ID": "composio-test-user",
-    }
-    missing = {key: value for key, value in expected.items() if values.get(key) != value}
-    if missing:
-        raise RuntimeError(f"onboarding did not write expected .env values: {missing}")
 
 
 def smoke_product_state_root_env() -> None:
@@ -537,11 +488,10 @@ def smoke_bootstrap_node_setup_installs_slides_dependencies() -> None:
 
 def main() -> int:
     smoke_swarm_import_skips_bootstrap()
-    smoke_onboard_env_writes()
     smoke_product_state_root_env()
     smoke_python_openswarm_tui_binary_resolution()
     smoke_bootstrap_node_setup_installs_slides_dependencies()
-    print("OpenSwarm import bootstrap and onboarding smoke passed")
+    print("OpenSwarm import bootstrap smoke passed")
     return 0
 
 
