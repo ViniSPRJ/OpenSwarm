@@ -59,7 +59,7 @@ PROVIDERS = [
     {
         "name":         "OpenAI",
         "env_key":      "OPENAI_API_KEY",
-        "default_model": "gpt-5.2",
+        "default_model": "gpt-5.4",
         "url":          "https://platform.openai.com/api-keys",
     },
     {

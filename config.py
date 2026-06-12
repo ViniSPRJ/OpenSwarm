@@ -2,7 +2,7 @@
 import os
 
 
-def get_default_model(fallback: str = "gpt-5.2"):
+def get_default_model(fallback: str = "gpt-5.4"):
     """Return the configured default model for standard agents."""
     model = os.getenv("DEFAULT_MODEL", fallback)
     return _resolve(model)
@@ -11,7 +11,7 @@ def get_default_model(fallback: str = "gpt-5.2"):
 def is_openai_provider() -> bool:
     """Return True when the configured provider is OpenAI (not LiteLLM).
 
-    OpenAI model IDs never contain a slash (e.g. 'gpt-5.2', 'o3').
+    OpenAI model IDs never contain a slash (e.g. 'gpt-5.4', 'o3').
     Any 'provider/model' string (e.g. 'anthropic/claude-sonnet-4-6',
     'litellm/gemini/gemini-3-flash') is treated as a LiteLLM-routed model.
     """
