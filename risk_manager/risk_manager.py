@@ -5,6 +5,7 @@ from openai.types.shared import Reasoning
 
 from config import get_specialist_model, is_specialist_openai_provider
 from run_utils import _load_openswarm_dotenv
+from shared_tools.GetMarketDataSnapshot import GetMarketDataSnapshot
 
 _load_openswarm_dotenv()
 
@@ -17,6 +18,7 @@ def create_risk_manager() -> Agent:
         description="Specialist in risk management, VaR, stress testing, and position sizing.",
         instructions=instructions_path,
         model=get_specialist_model(),
+        tools=[GetMarketDataSnapshot],
         model_settings=ModelSettings(
             reasoning=Reasoning(effort="medium", summary="auto") if is_specialist_openai_provider() else None,
         ),

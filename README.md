@@ -110,6 +110,21 @@ APP_TOKEN=
 The Portfolio Manager uses `ORCHESTRATOR_MODEL`. The six specialists use
 `SPECIALIST_MODEL`. `DEFAULT_MODEL` remains an optional fallback.
 
+## Market Data
+
+OpenSwarm can consume the read-only Nexus/Hostinger market-data helper through
+`GetMarketDataSnapshot`. Configure:
+
+```bash
+OPENSWARM_MARKET_DATA_URL=http://172.16.2.1:18182/market-data
+```
+
+The deployed Nexus desk VPS keeps that helper private: loopback remains
+available for host services, and Docker reaches it through the compose gateway
+`172.16.2.1`. The payload is market data only and must preserve provenance such
+as `source_of_truth`, `source_role`, quote timestamps, `stale`, and
+`execution_allowed=false`.
+
 ## Deployment Notes
 
 Deploy this as a separate service from Nexus Swarm TradingMB. Keep a separate virtual

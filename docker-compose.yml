@@ -30,3 +30,10 @@ services:
     command: ["python", "-u", "telegram_bot.py"]
     depends_on:
       - openswarm-trading-desk
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: ${OPENSWARM_DOCKER_SUBNET:-172.16.2.0/24}
+          gateway: ${OPENSWARM_DOCKER_GATEWAY:-172.16.2.1}

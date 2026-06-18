@@ -5,6 +5,7 @@ from openai.types.shared import Reasoning
 
 from config import get_orchestrator_model, is_orchestrator_openai_provider
 from run_utils import _load_openswarm_dotenv
+from shared_tools.GetMarketDataSnapshot import GetMarketDataSnapshot
 
 _load_openswarm_dotenv()
 
@@ -21,6 +22,7 @@ def create_orchestrator() -> Agent:
         ),
         instructions=instructions_path,
         model=get_orchestrator_model(),
+        tools=[GetMarketDataSnapshot],
         model_settings=ModelSettings(
             reasoning=Reasoning(effort="medium", summary="auto") if is_orchestrator_openai_provider() else None,
         ),

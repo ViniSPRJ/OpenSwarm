@@ -137,6 +137,7 @@ Role:
 Known contract from prior validation:
 
 - bot VPS helper: `http://127.0.0.1:18182/market-data`
+- OpenSwarm container URL on Nexus desk VPS: `http://172.16.2.1:18182/market-data`
 - backing source: Hostinger tailnet endpoint
 - B3 payload path: `hostinger_mt5.markets.b3.quotes`
 - US payload path: `hostinger_mt5.markets.us.quotes`
