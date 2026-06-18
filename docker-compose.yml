@@ -2,6 +2,7 @@ services:
   openswarm-trading-desk:
     build: .
     container_name: openswarm-trading-desk
+    restart: unless-stopped
     ports:
       - "${OPENSWARM_HOST_PORT:-18080}:${OPENSWARM_PORT:-18080}"
     env_file:
