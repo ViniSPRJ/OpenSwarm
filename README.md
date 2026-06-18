@@ -86,6 +86,16 @@ The Telegram sidecar waits up to 600 seconds by default and refreshes the
 typing indicator while OpenSwarm is working. Override with
 `OPENSWARM_TELEGRAM_REQUEST_TIMEOUT` if needed.
 
+Telegram lane shortcuts keep the Portfolio Manager as the final synthesizer
+while hinting which specialist should be used first:
+
+- `/fx` for FX and macro currency views
+- `/b3` or `/br` for Brazilian equities
+- `/us` for US equities
+- `/derivatives` or `/deriv` for derivatives and volatility
+- `/fixedincome` or `/fi` for rates, curves, credit, and fixed income
+- `/risk` for sizing, stress, VaR, and risk review
+
 ## Required Environment
 
 Set at least one provider key and a model:

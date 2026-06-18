@@ -23,6 +23,17 @@ STOP = False
 TELEGRAM_LIMIT = 3900
 DEFAULT_OPENSWARM_REQUEST_TIMEOUT_SECONDS = 600
 DEFAULT_TYPING_INTERVAL_SECONDS = 4.0
+LANE_COMMANDS = {
+    "/fx": ("FX Trader", "FX, moedas e macro cross-border"),
+    "/b3": ("Equities Trader", "acoes brasileiras e setores da B3"),
+    "/br": ("Equities Trader", "acoes brasileiras e setores da B3"),
+    "/us": ("US Equities Trader", "acoes americanas, indices e setores dos EUA"),
+    "/derivatives": ("Derivatives Trader", "opcoes, futuros, volatilidade e hedge"),
+    "/deriv": ("Derivatives Trader", "opcoes, futuros, volatilidade e hedge"),
+    "/fixedincome": ("Fixed Income Trader", "juros, curvas, credito e renda fixa"),
+    "/fi": ("Fixed Income Trader", "juros, curvas, credito e renda fixa"),
+    "/risk": ("Risk", "risco, sizing, stress e VaR quando houver dados"),
+}
 
 
 def _handle_stop(signum: int, frame: Any) -> None:
@@ -157,6 +168,33 @@ def _metadata_summary(client: httpx.Client, base_url: str, app_token: str) -> st
     return f"{metadata.get('agencyName', 'OpenSwarm')} online.\nAgentes: {agents}"
 
 
+def _apply_lane_hint(text: str) -> tuple[str, str | None]:
+    parts = text.strip().split(maxsplit=1)
+    if not parts:
+        return text, None
+
+    command = parts[0].lower()
+    lane = LANE_COMMANDS.get(command)
+    if lane is None:
+        return text, None
+
+    message = parts[1].strip() if len(parts) > 1 else ""
+    agent_name, lane_scope = lane
+    if not message:
+        return text, None
+
+    hinted_message = (
+        f"Telegram lane hint: o usuario selecionou a lane {agent_name} "
+        f"({lane_scope}). Portfolio Manager: mantenha sua sintese final, "
+        f"mas delegue primeiro e preferencialmente apenas para {agent_name}; "
+        "use Risk somente se houver uma pergunta clara de sizing, stress ou risco. "
+        "Responda de forma objetiva, preservando a fronteira analysis-only e "
+        "`ALERTA DE ARMADILHA` quando dados atuais/fonte canonica faltarem.\n\n"
+        f"Pedido do usuario: {message}"
+    )
+    return hinted_message, agent_name
+
+
 def _handle_text(
     client: httpx.Client,
     token: str,
@@ -174,7 +212,8 @@ def _handle_text(
             token,
             chat_id,
             "OpenSwarm Trading Desk online. Envie uma pergunta para o Portfolio Manager. "
-            "Use /status para checar a mesa.",
+            "Use /status para checar a mesa. Atalhos: /fx, /b3, /us, "
+            "/derivatives, /fixedincome, /risk. Os atalhos preservam a sintese do PM.",
         )
         return
 
@@ -190,7 +229,10 @@ def _handle_text(
     )
     typing_thread.start()
     try:
-        answer = _ask_openswarm(client, base_url, app_token, text, recipient_agent)
+        routed_text, lane_agent = _apply_lane_hint(text)
+        if lane_agent:
+            logger.info("Routing Telegram message through PM with lane hint: %s", lane_agent)
+        answer = _ask_openswarm(client, base_url, app_token, routed_text, recipient_agent)
         _send_message(client, token, chat_id, answer)
     finally:
         typing_stop.set()
