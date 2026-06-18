@@ -15,3 +15,18 @@ services:
       - ./activity-logs:/app/activity-logs
       - ./mnt:/app/mnt
       - ./uploads:/app/uploads
+
+  openswarm-telegram-bot:
+    build: .
+    container_name: openswarm-telegram-bot
+    restart: unless-stopped
+    profiles:
+      - telegram
+    env_file:
+      - .env
+    environment:
+      OPENSWARM_BASE_URL: http://openswarm-trading-desk:${OPENSWARM_PORT:-18080}
+      OPENSWARM_TELEGRAM_RECIPIENT_AGENT: Portfolio Manager
+    command: ["python", "-u", "telegram_bot.py"]
+    depends_on:
+      - openswarm-trading-desk

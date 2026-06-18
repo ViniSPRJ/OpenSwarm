@@ -67,6 +67,19 @@ Default host port is `18080`. To avoid a VPS collision:
 OPENSWARM_HOST_PORT=18081 OPENSWARM_PORT=18080 docker compose up --build
 ```
 
+## Telegram Bot
+
+OpenSwarm can run a dedicated Telegram polling sidecar:
+
+```bash
+OPENSWARM_TELEGRAM_BOT_TOKEN=
+OPENSWARM_TELEGRAM_ALLOWED_CHAT_IDS=
+docker compose --profile telegram up -d --build
+```
+
+Use a dedicated Telegram bot token. Do not reuse a token that is already being
+polled by another service.
+
 ## Required Environment
 
 Set at least one provider key and a model:
