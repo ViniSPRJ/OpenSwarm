@@ -191,7 +191,9 @@ def _apply_lane_hint(text: str) -> tuple[str, str | None]:
         "Responda de forma objetiva, preservando a fronteira analysis-only e "
         "diferencie falta de acesso direto nesta sessao de dado realmente degradado. "
         "Use `ALERTA DE ARMADILHA` somente para recomendacao executavel, sizing, "
-        "stops/entradas, conflito real de fonte ou timestamp stale comprovado.\n\n"
+        "stops/entradas, conflito real de fonte ou timestamp stale comprovado. "
+        "Nao afirme que comparou fontes, checou noticias ao vivo ou viu divergencia "
+        "de spot sem payload ou ferramenta nesta execucao.\n\n"
         f"Pedido do usuario: {message}"
     )
     return hinted_message, agent_name
