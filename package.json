@@ -1,7 +1,7 @@
 {
     "name": "@vrsen/openswarm",
     "version": "1.0.1-rc.9",
-    "description": "An open-source multi-agent AI team built on Agency Swarm",
+    "description": "Analysis-only trading desk swarm built on Agency Swarm",
     "license": "MIT",
     "publishConfig": {
         "access": "public"
@@ -22,14 +22,15 @@
         "shared_instructions.md",
         "shared_tools/",
         "orchestrator/",
-        "data_analyst_agent/",
-        "deep_research/",
-        "docs_agent/",
-        "image_generation_agent/",
-        "slides_agent/",
-        "video_generation_agent/",
-        "virtual_assistant/",
-        "patches/",
+        "fx_trader/",
+        "equities_trader/",
+        "us_equities_trader/",
+        "derivatives_trader/",
+        "fixed_income_trader/",
+        "risk_manager/",
+        "patches/__init__.py",
+        "patches/patch_ipython_interpreter_composio.py",
+        "patches/patch_utf8_file_reads.py",
         "pyproject.toml",
         "package.json",
         "package-lock.json",
@@ -38,18 +39,10 @@
         "!node_modules/**"
     ],
     "scripts": {
-        "postinstall": "node -e \"const fs=require('fs');const path=require('path');const cp=require('child_process');const pkg=__dirname;const patchTarget=path.join(pkg,'node_modules','dom-to-pptx');const patchCli=path.join(pkg,'node_modules','patch-package','index.js');if(fs.existsSync(patchTarget)&&fs.existsSync(patchCli)){cp.execFileSync(process.execPath,[patchCli],{cwd:pkg,stdio:'inherit'});}try{fs.chmodSync(path.join(pkg,'bin','openswarm'),0o755)}catch(e){}\""
+        "postinstall": "node -e \"const fs=require('fs');const path=require('path');const pkg=__dirname;try{fs.chmodSync(path.join(pkg,'bin','openswarm'),0o755)}catch(e){}\""
     },
     "dependencies": {
-        "@vrsen/agentswarm": "1.4.39",
-        "dom-to-pptx": "1.1.5",
-        "patch-package": "^8.0.1",
-        "playwright": "^1.59.1",
-        "pptxgenjs": "^3.12.0",
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0",
-        "react-icons": "^5.0.0",
-        "sharp": "^0.33.0"
+        "@vrsen/agentswarm": "1.4.39"
     },
     "optionalDependencies": {
         "@vrsen/openswarm-cli-darwin-arm64": "1.0.1-rc.9",

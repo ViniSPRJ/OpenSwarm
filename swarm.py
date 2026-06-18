@@ -45,32 +45,29 @@ def create_agency(load_threads_callback=None):
     from agency_swarm.tools import Handoff, SendMessage
 
     from orchestrator import create_orchestrator
-    from virtual_assistant import create_virtual_assistant
-    from deep_research import create_deep_research
-    from data_analyst_agent import create_data_analyst
-    from slides_agent import create_slides_agent
-    from docs_agent import create_docs_agent
-    from video_generation_agent import create_video_generation_agent
-    from image_generation_agent import create_image_generation_agent
+    from fx_trader.fx_trader import create_fx_trader
+    from equities_trader.equities_trader import create_equities_trader
+    from us_equities_trader.us_equities_trader import create_us_equities_trader
+    from derivatives_trader.derivatives_trader import create_derivatives_trader
+    from fixed_income_trader.fixed_income_trader import create_fixed_income_trader
+    from risk_manager.risk_manager import create_risk_manager
 
     orchestrator = create_orchestrator()
-    virtual_assistant = create_virtual_assistant()
-    deep_research = create_deep_research()
-    data_analyst = create_data_analyst()
-    slides_agent = create_slides_agent()
-    docs_agent = create_docs_agent()
-    video_generation_agent = create_video_generation_agent()
-    image_generation_agent = create_image_generation_agent()
+    fx_trader = create_fx_trader()
+    equities_trader = create_equities_trader()
+    us_equities_trader = create_us_equities_trader()
+    derivatives_trader = create_derivatives_trader()
+    fixed_income_trader = create_fixed_income_trader()
+    risk_manager = create_risk_manager()
 
     all_agents = [
         orchestrator,
-        virtual_assistant,
-        slides_agent,
-        deep_research,
-        data_analyst,
-        docs_agent,
-        video_generation_agent,
-        image_generation_agent,
+        fx_trader,
+        equities_trader,
+        us_equities_trader,
+        derivatives_trader,
+        fixed_income_trader,
+        risk_manager,
     ]
 
     send_message_flows = [
@@ -79,17 +76,23 @@ def create_agency(load_threads_callback=None):
         if specialist is not orchestrator
     ]
 
-    handoff_flows = [
-        (a > b, Handoff)
-        for a in all_agents
-        for b in all_agents
-        if a is not b
+    market_traders = [
+        fx_trader,
+        equities_trader,
+        us_equities_trader,
+        derivatives_trader,
+        fixed_income_trader,
+    ]
+
+    risk_handoff_flows = [
+        (trader > risk_manager, Handoff)
+        for trader in market_traders
     ]
 
     agency = Agency(
         *all_agents,
-        communication_flows=send_message_flows + handoff_flows,
-        name="OpenSwarm",
+        communication_flows=send_message_flows + risk_handoff_flows,
+        name="OpenSwarm Trading Desk",
         shared_instructions="shared_instructions.md",
         load_threads_callback=load_threads_callback,
     )

@@ -1,29 +1,34 @@
+import os
+
 from agency_swarm import Agent, ModelSettings
 from openai.types.shared import Reasoning
 
-from config import get_default_model, is_openai_provider
+from config import get_orchestrator_model, is_orchestrator_openai_provider
 from run_utils import _load_openswarm_dotenv
 
 _load_openswarm_dotenv()
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+instructions_path = os.path.join(current_dir, "instructions.md")
+
 
 def create_orchestrator() -> Agent:
     return Agent(
-        name="Orchestrator",
+        name="Portfolio Manager",
         description=(
-            "Primary coordinator that plans multi-agent workflows, runs independent workstreams in parallel, "
-            "and hands off to a specialist when tight user iteration is needed."
+            "The Portfolio Manager (PM) who oversees the Trading Desk, sets macro views, "
+            "delegates analysis to specialized traders, and synthesizes the final portfolio book."
         ),
-        instructions="./instructions.md",
-        model=get_default_model(),
+        instructions=instructions_path,
+        model=get_orchestrator_model(),
         model_settings=ModelSettings(
-            reasoning=Reasoning(effort="medium", summary="auto") if is_openai_provider() else None,
+            reasoning=Reasoning(effort="medium", summary="auto") if is_orchestrator_openai_provider() else None,
         ),
         conversation_starters=[
-            "What can this agency do?",
-            "Build a full launch package: research, slides, docs, and creative assets.",
-            "Analyze my data and then turn insights into a polished executive deck.",
-            "Coordinate a workflow for proposal doc + promo visuals + short product video.",
+            "What is our current macro view?",
+            "Analyze the upcoming Fed meeting and give me a trade idea for FX and US Equities.",
+            "Review our Brazilian equities exposure and check with Risk if we are too concentrated.",
+            "Coordinate a full portfolio review across all asset classes.",
         ],
     )
 

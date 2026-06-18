@@ -29,7 +29,10 @@ def apply_ipython_composio_context_patch() -> None:
     `user_id` singletons from the environment so that Composio tool calls made
     inside the kernel work without any manual setup.
     """
-    from agency_swarm.tools import IPythonInterpreter
+    try:
+        from agency_swarm.tools import IPythonInterpreter
+    except ImportError:
+        return
 
     if getattr(IPythonInterpreter, "_composio_context_patch_applied", False):
         return

@@ -1,130 +1,95 @@
-# OpenSwarm — Customization Guide
+# OpenSwarm Trading Desk - Customization Guide
 
-This file gives coding agents (Cursor, Claude Code, Codex, etc.) everything they need to understand and customize this swarm. Read it before making any changes.
+Read this before making changes.
 
----
-
-## What is OpenSwarm?
-
-OpenSwarm is a multi-agent AI team you can fork and reshape into any kind of swarm you need — SEO, sales, research, finance, customer support, or anything else. Each agent is a specialist. They collaborate through a shared orchestrator.
-
----
+OpenSwarm Trading Desk is an analysis-only multi-agent trading desk. It can research
+markets, structure ideas, and produce risk commentary, but it must not place orders,
+route orders, approve execution, or mutate broker state.
 
 ## Folder Structure
 
 ```
-swarm.py                  ← main config: imports all agents, defines how they connect
-shared_instructions.md    ← context shared across every agent
-run.py                    ← CLI entry point (terminal demo)
-server.py                 ← API entry point (FastAPI server)
+swarm.py                  <- main config: imports all agents and defines flows
+shared_instructions.md    <- context shared across every agent
+server.py                 <- FastAPI API entry point
+run_utils.py              <- launcher/runtime helpers
 
 orchestrator/
-  orchestrator.py         ← agent definition
-  instructions.md         ← system prompt
+  orchestrator.py         <- Portfolio Manager definition
+  instructions.md         <- PM system prompt
 
-data_analyst_agent/
-  data_analyst_agent.py
+fx_trader/
+  fx_trader.py
   instructions.md
-  tools/                  ← custom tools for this agent
 
-docs_agent/
-  docs_agent.py
+equities_trader/
+  equities_trader.py
   instructions.md
-  tools/
 
-slides_agent/
-  slides_agent.py
+us_equities_trader/
+  us_equities_trader.py
   instructions.md
-  tools/
 
-image_generation_agent/
-  image_generation_agent.py
+derivatives_trader/
+  derivatives_trader.py
   instructions.md
-  tools/
 
-video_generation_agent/
-  video_generation_agent.py
+fixed_income_trader/
+  fixed_income_trader.py
   instructions.md
-  tools/
 
-deep_research/
-  deep_research.py
+risk_manager/
+  risk_manager.py
   instructions.md
-  tools/
 
-virtual_assistant/
-  virtual_assistant.py
-  instructions.md
-  tools/
-
-shared_tools/             ← tools available to all agents (Composio integrations, etc.)
+shared_tools/             <- optional tools available to agents
 ```
-
----
-
-## How Agents Connect (`swarm.py`)
-
-`swarm.py` is the only file you need to edit when adding, removing, or rewiring agents. It:
-
-1. Imports a `create_*` factory function from each agent folder
-2. Instantiates all agents
-3. Defines communication flows — who can talk to whom
-
-The default pattern is **orchestrator-to-all**: the orchestrator can send messages to every specialist, and all agents can hand off to each other.
-
----
-
-## How to Customize
-
-To build your own swarm from this repo:
-
-1. **Fork and rename** the repo (e.g., `seo-swarm`)
-2. **Decide which agents to keep, rename, or replace**
-   - Rename the folder and its files to match the new agent's purpose
-   - Update `instructions.md` with the new system prompt
-   - Update `swarm.py` to import and register the renamed agent
-3. **Add or remove tools** inside each agent's `tools/` folder
-4. **Update `shared_instructions.md`** with any context all agents should share
-5. **Run** with `python run.py`
-
-### Example prompt to give your coding agent
-
-> "Turn this into an SEO optimization swarm. The Research Agent becomes an SEO Keyword Planner, the Docs Agent becomes a Blog Post Writer, the Data Analyst becomes an SEO Analytics Agent (Google Search Console + GA4), and the General Agent handles technical SEO like schema markup and site audits. Keep the orchestrator and shared tools as-is."
-
-The coding agent will read this file, understand the structure, and make the right changes automatically.
-
----
 
 ## Current Agents
 
 | Agent | Purpose |
 |---|---|
-| `orchestrator` | Routes tasks to the right specialist |
-| `virtual_assistant` | Email, calendar, Slack, file management |
-| `deep_research` | Web research and synthesis |
-| `data_analyst_agent` | Data analysis, visualization, statistical modeling |
-| `docs_agent` | Document creation and editing |
-| `slides_agent` | PowerPoint / HTML slide generation |
-| `image_generation_agent` | AI image generation and editing |
-| `video_generation_agent` | AI video generation and editing |
+| `orchestrator` | Portfolio Manager, user-facing router and synthesizer |
+| `fx_trader` | FX and global macro currency research |
+| `equities_trader` | Brazil/B3 equities research |
+| `us_equities_trader` | US equities research |
+| `derivatives_trader` | Options, futures, volatility, and hedge structures |
+| `fixed_income_trader` | Rates, curves, duration, bonds, and credit |
+| `risk_manager` | Risk management, scenario analysis, sizing, concentration, VaR/ES when real inputs exist |
 
----
+## Safety Boundaries
+
+- This repository is analysis-only.
+- Never add broker execution, order placement, or approval logic here without a separate explicit user request and a human-gated execution design.
+- If source freshness, market data, position data, or execution authority is unclear, agents must say `ALERTA DE ARMADILHA` and stop before an executable recommendation.
+- Preserve provenance fields exactly: `book_source`, `manual_source`, `live_source`, `source_of_truth`, and `source_role`.
+- In the current Nexus topology, the VPS is a control-plane/research surface by default. Mac Mini remains the expected market-data edge/source unless a checked contract says otherwise.
+
+## How Agents Connect
+
+`swarm.py` imports every `create_*` factory, instantiates the desk, and defines:
+
+- Portfolio Manager -> every specialist via `SendMessage`
+- Market traders -> Risk via `Handoff`
+- No direct specialist-to-specialist chatter outside the Risk lane
 
 ## Key Conventions
 
-- Each agent folder has one `<name>.py` file and one `instructions.md`
-- `instructions.md` is the agent's system prompt — edit it to change behavior
-- Tools live in `tools/` and are auto-loaded by the agent definition
-- `shared_tools/` contains Composio-powered integrations (Gmail, Slack, GitHub, etc.) available to all agents
-- Models are configured via `DEFAULT_MODEL` in `.env` — never hardcoded
+- Each agent folder has one `<name>.py`, one `instructions.md`, and one `__init__.py`.
+- Use absolute instruction paths inside agent definitions so deployment does not depend on the process working directory.
+- Models are configured through `DEFAULT_MODEL` in `.env`, never hardcoded.
+- API defaults to `OPENSWARM_PORT=18080` to avoid the original OpenSwarm `8080` default.
+- Keep Docker/systemd deployments isolated from Nexus Swarm TradingMB with separate env, logs, and Python environment.
 
-Before proceeding with agent creation, please read the following instructions carefully:
+## Required Workflow Reference
 
-- `.cursor/rules/agency-swarm-workflow.mdc` - your primary guide for creating agents and agencies
+Before proceeding with agent creation or rewiring, read:
 
-The following files can be read on demand, depending on the task at hand:
+- `.cursor/rules/agency-swarm-workflow.mdc`
 
-- `.cursor/commands/add-mcp.md` - how to add MCP servers to an agent
-- `.cursor/commands/mcp-code-exec.md` - how to convert an MCP server into the Code Execution Pattern (progressive tool disclosure, 98% token reduction)
-- `.cursor/commands/write-instructions.md` - how to write effective instructions for AI agents
-- `.cursor/commands/create-prd.md` - how to create a PRD for an agent (use for complex multi agent systems)
+Read these only when needed:
+
+- `.cursor/commands/add-mcp.md`
+- `.cursor/commands/mcp-code-exec.md`
+- `.cursor/commands/write-instructions.md`
+- `.cursor/commands/create-prd.md`

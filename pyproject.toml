@@ -1,12 +1,12 @@
 [project]
 name = "open-swarm"
-description = "An open-source multi-agent AI team built on Agency Swarm and the OpenAI Agents SDK"
+description = "Analysis-only trading desk swarm built on Agency Swarm and the OpenAI Agents SDK"
 version = "1.0.1-rc.9"
 license = { text = "MIT" }
-keywords = ["agency-swarm", "openai", "multi-agent", "open-source", "openswarm"]
+keywords = ["agency-swarm", "openai", "multi-agent", "openswarm", "trading-desk"]
 requires-python = ">=3.12"
 dependencies = [
-    "agency-swarm[fastapi,jupyter,litellm]>=1.10.1",
+    "agency-swarm[fastapi,litellm]>=1.10.1",
     "questionary>=2.0.0",
     "python-dotenv",
     "rich",
@@ -15,44 +15,6 @@ dependencies = [
     "composio==0.8.0",
     "composio-openai-agents==0.8.0",
     "pytz",
-    # Data analysis
-    "pandas>=2.0.0",
-    "numpy>=1.24.0",
-    "scipy>=1.10.0",
-    "statsmodels>=0.14.0",
-    "scikit-learn>=1.3.0",
-    # Visualisation
-    "matplotlib>=3.5.0",
-    "seaborn>=0.12.0",
-    "plotly>=5.14.0",
-    # Excel / CSV
-    "openpyxl>=3.1.0",
-    "xlrd>=2.0.0",
-    # Jupyter / IPython
-    "jupyter>=1.0.0",
-    "ipython>=8.0.0",
-    "nbformat>=5.0.0",
-    # Image processing
-    "pillow>=9.0.0",
-    "opencv-python-headless",
-    # PowerPoint / document processing
-    "python-pptx>=1.0.0",
-    "defusedxml>=0.7.0",
-    "pdf2image>=1.16.0",
-    "markitdown[pptx]>=0.1.0",
-    "six>=1.16.0",
-    "python-docx",
-    "tinycss2",
-    "beautifulsoup4",
-    "cairosvg",
-    "weasyprint",
-    "html2text",
-    "playwright",
-    # AI / media generation
-    "google-genai",
-    "fal-client",
-    "moviepy<2",
-    "imageio-ffmpeg",
     "httpx",
 ]
 
@@ -71,4 +33,3 @@ exclude = ["agentswarm-cli*", "venv*", ".venv*", ".agency_swarm*", "node_modules
 
 [tool.setuptools.data-files]
 "." = ["openswarm.config.mjs", "openswarm.product-env.json", "package.json"]
-"patches" = ["patches/dom-to-pptx+1.1.5.patch"]

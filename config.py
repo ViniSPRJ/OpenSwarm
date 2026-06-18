@@ -4,8 +4,17 @@ import os
 
 def get_default_model(fallback: str = "gpt-5.2"):
     """Return the configured default model for standard agents."""
-    model = os.getenv("DEFAULT_MODEL", fallback)
-    return _resolve(model)
+    return _resolve(_default_model_name(fallback))
+
+
+def get_orchestrator_model(fallback: str = "litellm/openrouter/openrouter/fusion"):
+    """Return the configured model for the Portfolio Manager."""
+    return _resolve(_orchestrator_model_name(fallback))
+
+
+def get_specialist_model(fallback: str = "litellm/openrouter/deepseek/deepseek-v4-flash"):
+    """Return the configured model for trading specialists."""
+    return _resolve(_specialist_model_name(fallback))
 
 
 def is_openai_provider() -> bool:
@@ -15,7 +24,31 @@ def is_openai_provider() -> bool:
     Any 'provider/model' string (e.g. 'anthropic/claude-sonnet-4-6',
     'litellm/gemini/gemini-3-flash') is treated as a LiteLLM-routed model.
     """
-    return "/" not in os.getenv("DEFAULT_MODEL", "")
+    return _is_openai_model(_default_model_name())
+
+
+def is_orchestrator_openai_provider() -> bool:
+    return _is_openai_model(_orchestrator_model_name())
+
+
+def is_specialist_openai_provider() -> bool:
+    return _is_openai_model(_specialist_model_name())
+
+
+def _default_model_name(fallback: str = "gpt-5.2") -> str:
+    return os.getenv("DEFAULT_MODEL") or fallback
+
+
+def _orchestrator_model_name(fallback: str = "litellm/openrouter/openrouter/fusion") -> str:
+    return os.getenv("ORCHESTRATOR_MODEL") or os.getenv("DEFAULT_MODEL") or fallback
+
+
+def _specialist_model_name(fallback: str = "litellm/openrouter/deepseek/deepseek-v4-flash") -> str:
+    return os.getenv("SPECIALIST_MODEL") or os.getenv("DEFAULT_MODEL") or fallback
+
+
+def _is_openai_model(model: str) -> bool:
+    return "/" not in model
 
 
 def _resolve(model: str):

@@ -1,10 +1,16 @@
 services:
-  openswarm:
+  openswarm-trading-desk:
     build: .
+    container_name: openswarm-trading-desk
     ports:
-      - "8080:8080"
+      - "${OPENSWARM_HOST_PORT:-18080}:${OPENSWARM_PORT:-18080}"
     env_file:
       - .env
+    environment:
+      OPENSWARM_HOST: 0.0.0.0
+      OPENSWARM_PORT: ${OPENSWARM_PORT:-18080}
+      OPENSWARM_SERVICE_ROLE: analysis_only
     volumes:
+      - ./activity-logs:/app/activity-logs
       - ./mnt:/app/mnt
       - ./uploads:/app/uploads
