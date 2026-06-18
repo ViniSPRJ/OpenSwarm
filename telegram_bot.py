@@ -189,7 +189,9 @@ def _apply_lane_hint(text: str) -> tuple[str, str | None]:
         f"mas delegue primeiro e preferencialmente apenas para {agent_name}; "
         "use Risk somente se houver uma pergunta clara de sizing, stress ou risco. "
         "Responda de forma objetiva, preservando a fronteira analysis-only e "
-        "`ALERTA DE ARMADILHA` quando dados atuais/fonte canonica faltarem.\n\n"
+        "diferencie falta de acesso direto nesta sessao de dado realmente degradado. "
+        "Use `ALERTA DE ARMADILHA` somente para recomendacao executavel, sizing, "
+        "stops/entradas, conflito real de fonte ou timestamp stale comprovado.\n\n"
         f"Pedido do usuario: {message}"
     )
     return hinted_message, agent_name
