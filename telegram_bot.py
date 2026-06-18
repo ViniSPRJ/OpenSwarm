@@ -1,6 +1,7 @@
 import logging
 import os
 import signal
+import threading
 import time
 from typing import Any
 
@@ -20,6 +21,8 @@ logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 STOP = False
 TELEGRAM_LIMIT = 3900
+DEFAULT_OPENSWARM_REQUEST_TIMEOUT_SECONDS = 600
+DEFAULT_TYPING_INTERVAL_SECONDS = 4.0
 
 
 def _handle_stop(signum: int, frame: Any) -> None:
@@ -90,6 +93,19 @@ def _send_chat_action(client: httpx.Client, token: str, chat_id: int) -> None:
         logger.debug("Failed to send typing action", exc_info=True)
 
 
+def _typing_loop(token: str, chat_id: int, stop_event: threading.Event) -> None:
+    interval = float(
+        os.getenv(
+            "OPENSWARM_TELEGRAM_TYPING_INTERVAL",
+            str(DEFAULT_TYPING_INTERVAL_SECONDS),
+        )
+    )
+    with httpx.Client() as client:
+        while not stop_event.is_set():
+            _send_chat_action(client, token, chat_id)
+            stop_event.wait(interval)
+
+
 def _openswarm_headers(app_token: str) -> dict[str, str]:
     return {
         "Authorization": f"Bearer {app_token}",
@@ -104,6 +120,13 @@ def _ask_openswarm(
     message: str,
     recipient_agent: str,
 ) -> str:
+    timeout_seconds = float(
+        os.getenv(
+            "OPENSWARM_TELEGRAM_REQUEST_TIMEOUT",
+            str(DEFAULT_OPENSWARM_REQUEST_TIMEOUT_SECONDS),
+        )
+    )
+    started_at = time.monotonic()
     response = client.post(
         f"{base_url.rstrip('/')}/open-swarm/get_response",
         headers=_openswarm_headers(app_token),
@@ -111,9 +134,10 @@ def _ask_openswarm(
             "message": message,
             "recipient_agent": recipient_agent,
         },
-        timeout=float(os.getenv("OPENSWARM_TELEGRAM_REQUEST_TIMEOUT", "180")),
+        timeout=timeout_seconds,
     )
     response.raise_for_status()
+    logger.info("OpenSwarm response completed in %.1fs", time.monotonic() - started_at)
     payload = response.json()
     result = payload.get("response") or payload.get("content") or payload.get("message")
     if result is None:
@@ -158,9 +182,19 @@ def _handle_text(
         _send_message(client, token, chat_id, _metadata_summary(client, base_url, app_token))
         return
 
-    _send_chat_action(client, token, chat_id)
-    answer = _ask_openswarm(client, base_url, app_token, text, recipient_agent)
-    _send_message(client, token, chat_id, answer)
+    typing_stop = threading.Event()
+    typing_thread = threading.Thread(
+        target=_typing_loop,
+        args=(token, chat_id, typing_stop),
+        daemon=True,
+    )
+    typing_thread.start()
+    try:
+        answer = _ask_openswarm(client, base_url, app_token, text, recipient_agent)
+        _send_message(client, token, chat_id, answer)
+    finally:
+        typing_stop.set()
+        typing_thread.join(timeout=1)
 
 
 def main() -> None:

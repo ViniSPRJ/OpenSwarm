@@ -80,6 +80,12 @@ docker compose --profile telegram up -d --build
 Use a dedicated Telegram bot token. Do not reuse a token that is already being
 polled by another service.
 
+Long multi-agent research requests can take several minutes because the
+Portfolio Manager may delegate to specialists before sending the final answer.
+The Telegram sidecar waits up to 600 seconds by default and refreshes the
+typing indicator while OpenSwarm is working. Override with
+`OPENSWARM_TELEGRAM_REQUEST_TIMEOUT` if needed.
+
 ## Required Environment
 
 Set at least one provider key and a model:
